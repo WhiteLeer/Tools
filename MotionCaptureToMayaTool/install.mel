@@ -1,0 +1,47 @@
+global string $gShelfTopLevel;
+string $currentShelf = `tabLayout -query -selectTab $gShelfTopLevel`;
+setParent $currentShelf;
+
+string $mocapToolScriptLocation = `mocapToolScriptLocation`;
+
+if (`gmatch $mocapToolScriptLocation "*\*"`){
+    $mocapToolScriptLocation = `substituteAllString $mocapToolScriptLocation "\\" "/"`;
+}
+
+string $scriptName = "MocapTool";
+string $sourceFile = $mocapToolScriptLocation + $scriptName + ".py";
+string $icon = "absolute.png";
+
+if (!`file -q -ex $sourceFile`) {
+    error ("Error: Cannot find script file: " + $sourceFile);
+}
+
+string $command = "python(\"exec(open(r'"+ $sourceFile +"', 'r').read())\");";
+
+shelfButton
+    -command $command
+    -annotation $scriptName
+    -label $scriptName
+    -image $icon
+    -image1 $icon
+    -sourceType "mel";
+
+global proc mocapToolScriptLocator (){}
+
+global proc string mocapToolScriptLocation ()
+{
+    string $whatIs = `whatIs mocapToolScriptLocator`;
+    string $fullPath = `substring $whatIs 25 999`;
+    string $buffer[];
+    string $slash = "/";
+
+    if (`gmatch $whatIs "*\\\\*"`) 
+        $slash = "\\";
+
+    int $numTok = `tokenize $fullPath $slash $buffer`;
+    int $numLetters = size($fullPath);
+    int $numLettersLastFolder = size($buffer[$numTok - 1]);
+    string $scriptLocation = `substring $fullPath 1 ($numLetters - $numLettersLastFolder)`;
+    
+    return $scriptLocation;
+}
